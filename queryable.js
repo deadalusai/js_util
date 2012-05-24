@@ -7,56 +7,37 @@
  *  - Automatic JSON serialization
  */
 
-(function (scope, $) {
-	function build_headers_from(definitions) {
-		if (!definitions) { return; }
-
-		var h = {}, def, name, i;
-
-		function add (name, def) {
-			def = (typeof def === 'function') ? def() : def;
-			if (def) { h[name] = def; }
+(function (scope, ajax) {
+	function each(obj, callback) {
+		for (var name in obj) {
+			callback(name, obj[name]);
 		}
-		
-		if ($.isArray(definitions)) {
-			for (i = 0; i < definitions.length; i++) {
-				def = definitions[i].split('=');
-				add(def[0], def[1]);
-			}
-		}
-		else {
-			for (name in definitions) {
-				def = definitions[name];
-				add(name, def);
-			}
-		}
-		return h;
 	}
 
-	function build_odata_querystring(query) {
-		
+	var r_name = /{([a-z]+)}/ig;
+
+	function format(fmt, args) {
+		return (typeof fmt === 'string') ? fmt.replace(r_name, function(p, name) { return args[name] || ''; }) : fmt;
 	}
 
-	function make_query_method(method) {
+	function make(method) {
 		method = method.toUpperCase();
 
-		 /*
-		 	var query = {
-	 			//Odata bindings, $filter, $orderBy, $top, $skip
-				'${name}': function | string,
+	  /*
+	 	var query = {
+	 		//Serialized to JSON and sent as message body
+			'data': object,
 
-				//Serialized to JSON and sent as message body
-				'data': object,
+			//Additional headers can be defined here as a key/value map
+			'headers': object,
 
-				//Additional headers can be defined here as a key/value map
-				'headers': object,
+			//Any other property can be used in url or header binding
+			'{name}': string | number
+	 	};
+	  */
 
-				//Any other property can be used in url binding
-				'{name}': string | number
-	 		};
-		 */
-
-		return function (endpoint, query) {
+		return function (url_pattern, query) {
+			query = query || {};
 			var settings = { type: method, dataType: 'json' };
 
 			if (method !== 'GET' && query.data) {
@@ -64,31 +45,29 @@
 				settings.contentType = 'application/json';
 			}
 
+			//process headers
+			settings.headers = {};
+			function add_header(name, header) { 
+				header = (typeof header === 'function') ? header() : header;
+				if (header) { settings.headers[name] = format(header, query); }
+			};
+			each(this.headers, add_header); 
+		  each(query.headers, add_header);
+
 			//trim leading /
-			if (endpoint.substring(0, 1) === '/') {
-				endpoint = endpoint.substring(1);
+			if (url_pattern.substring(0, 1) === '/') {
+				url_pattern = url_pattern.substring(1);
 			}
-
-			//parse headers
-			settings.headers = $.extend({},
-				build_headers_from(this.headers), 
-				build_headers_from(query.headers)
-			);
-
-			//parse odata queryables
-			var odata = build_odata_querystring(query);
 			
-			//data-bind the endpoint url
-			endpoint = endpoint.replace(r_name, function (p, prop) { return query[prop]; });
+			//data-bind the url_pattern url
+			url_pattern = format(url_pattern, query);
 
-			return $.ajax(this.api_endpoint + endpoint, settings);
+			return ajax(this.api_endpoint + url_pattern, settings);
 		};
 	}
 
-	var r_name = /{([a-z]+)}/ig;
-
 	var Queryable = function (api_endpoint, headers) {
-	  	//append trailing /
+  	//append trailing /
 		if (api_endpoint[api_endpoint.length - 1] !== '/') {
 			api_endpoint += '/';
 		}
@@ -98,11 +77,11 @@
 	};
 
 	Queryable.prototype = {
-	  get: make_query_method('get'),
-	  post: make_query_method('post'),
-	  put: make_query_method('put'),
-	  del: make_query_method('delete')
+	  get: make('get'),
+	  post: make('post'),
+	  put: make('put'),
+	  del: make('delete')
 	};
 
 	scope.Queryable = Queryable;
-})(window, jQuery);
+})(window, jQuery.ajax);
