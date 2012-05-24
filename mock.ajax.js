@@ -1,5 +1,12 @@
 var http = require('http');
 
+function make_regexer(pattern) {
+  return function (input) { 
+    pattern.lastIndex = 0; 
+    return pattern.exec(input); 
+  }
+}
+
 function fix_path(url) {
   //[host, name1=value&name2=value]
   var parts = url.split('?');
@@ -21,14 +28,14 @@ function fix_path(url) {
   return parts.join('?');
 }
 
-var r_url = /(https?)\:\/\/([a-z-_]+(?:\.[a-z-_]+)*)(?::(\d+))?(\/[^\?]+)?(\?.*)?/ig;
+var r_url = make_regexer(/^(https?)\:\/\/([a-z-_]+(?:\.[a-z-_]+)*)(?::(\d+))?(\/[^\?]+)?(\?.*)?$/ig);
 
 function get_parts(url) {
-  var m = r_url.exec(url);
+  var m = r_url(url);
   if (!m) {
     throw 'Could not parse url ' + url;
   }
-  return { scheme: m[1] || '', host: m[2] || '',  port: m[3] || 80, path: m[4] || '', query: m[5] || '' };
+  return { scheme: m[1], host: m[2],  port: m[3] || 80, path: m[4] || '', query: m[5] || '' };
 }
 
 var proxy_settings = { host: null, port: null };
@@ -40,13 +47,11 @@ module.exports = {
     var url = fix_path(url);
     var parts = get_parts(url);
 
-    console.log(parts);
-
     var req_settings = {
+      path: url,
       host: proxy_settings.host || parts.host,
       port: proxy_settings.port || parts.port, 
       method: settings.type,
-      path: url,
       headers: settings.headers
     };
 
@@ -54,7 +59,7 @@ module.exports = {
       req_settings.headers['Content-Type'] = setting.contentType;
     }
 
-    console.log(url);
+    console.log(settings.type, url);
 
     var req = http.request(req_settings, function(res) {
       var data = '';

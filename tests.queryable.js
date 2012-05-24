@@ -17,14 +17,12 @@ ajax.success(function (claims) {
 
   for (var i = 0; i < claims.length; i++) {
     (function(claim) {
-      
       var ajax = q.get('claims/{claimId}/expenses?$filter=CategoryTitle eq \'{categoryTitle}\'', { claimId: claim.ClaimId, categoryTitle: 'prius' });
 
       ajax.error(function (status, code, error) { console.log('Error:', code, status, error); });
       ajax.success(function (expenses) {
-        console.log('Claim for "' + claim.Purpose + '" has', expenses.length, 'expenses', expenses);
+        console.log('Claim for "' + claim.Purpose + '" has', expenses.length, 'prius expenses');
       });
-
     })(claims[i]);
   }
 });

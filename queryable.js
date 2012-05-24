@@ -23,7 +23,7 @@
 	function make(method) {
 		method = method.toUpperCase();
 
-	  /*
+	  	/*
 	 	var query = {
 	 		//Serialized to JSON and sent as message body
 			'data': object,
@@ -34,7 +34,7 @@
 			//Any other property can be used in url or header binding
 			'{name}': string | number
 	 	};
-	  */
+	  	*/
 
 		return function (url_pattern, query) {
 			query = query || {};
@@ -52,7 +52,7 @@
 				if (header) { settings.headers[name] = format(header, query); }
 			};
 			each(this.headers, add_header); 
-		  each(query.headers, add_header);
+		  	each(query.headers, add_header);
 
 			//trim leading /
 			if (url_pattern.substring(0, 1) === '/') {
