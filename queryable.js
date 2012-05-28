@@ -17,7 +17,7 @@
 	var r_name = /\\?{([a-z]+)}/ig;
 
 	function format(fmt, args) {
-		return (typeof fmt === 'string') ? fmt.replace(r_name, function (match, name) { return (match[0] === '\\') ? match : args[name] || ''; }) : fmt;
+		return (typeof fmt === 'string') ? fmt.replace(r_name, function (match, name) { return (match[0] === '\\') ? match.substring(1) : args[name] || ''; }) : fmt;
 	}
 
 	function make(method) {
