@@ -14,16 +14,16 @@
 		}
 	}
 
-	var r_name = /{([a-z]+)}/ig;
+	var r_name = /\\?{([a-z]+)}/ig;
 
 	function format(fmt, args) {
-		return (typeof fmt === 'string') ? fmt.replace(r_name, function(p, name) { return args[name] || ''; }) : fmt;
+		return (typeof fmt === 'string') ? fmt.replace(r_name, function (match, name) { return (match[0] === '\\') ? match : args[name] || ''; }) : fmt;
 	}
 
 	function make(method) {
 		method = method.toUpperCase();
 
-	  	/*
+		/*
 	 	var query = {
 	 		//Serialized to JSON and sent as message body
 			'data': object,
